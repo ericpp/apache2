@@ -21,8 +21,8 @@ define :apache_site, :enable => true do
   include_recipe 'apache2::default'
 
   if params[:enable]
-    execute "a2ensite #{params[:name]}" do
-      command "/usr/sbin/a2ensite #{params[:name]}"
+    execute "a2ensite #{params[:name]}.conf" do
+      command "/usr/sbin/a2ensite #{params[:name]}.conf"
       notifies :reload, 'service[apache2]'
       not_if do
         ::File.symlink?("#{node['apache']['dir']}/sites-enabled/#{params[:name]}") ||
@@ -33,8 +33,13 @@ define :apache_site, :enable => true do
       only_if { ::File.exist?("#{node['apache']['dir']}/sites-available/#{params[:name]}.conf") }
     end
   else
-    execute "a2dissite #{params[:name]}" do
-      command "/usr/sbin/a2dissite #{params[:name]}"
+    execute "a2dissite #{params[:name]}.conf" do
+      if ::File.symlink?("#{node['apache']['dir']}/sites-enabled/#{params[:name]}") ||
+         ::File.symlink?("#{node['apache']['dir']}/sites-enabled/000-#{params[:name]}")
+        command "/usr/sbin/a2dissite #{params[:name]}"
+      else
+        command "/usr/sbin/a2dissite #{params[:name]}.conf"
+      end
       notifies :reload, 'service[apache2]'
       only_if do
         ::File.symlink?("#{node['apache']['dir']}/sites-enabled/#{params[:name]}") ||
